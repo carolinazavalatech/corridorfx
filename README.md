@@ -8,7 +8,9 @@
 
 ## 🔗 Live Prototype
 
-**[View the interactive prototype →](https://your-username.github.io/corridorfx/)**
+**[View the interactive prototype →](https://carolinazavalatech.github.io/corridorfx/)**
+
+**[View the repository →](https://github.com/carolinazavalatech/corridorfx)**
 
 Navigate through 3 screens · Toggle between payment flows · Test the FX conversion simulator
 
