@@ -1,1 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CorridorFX — Prototype</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg1: #ffffff; --bg2: #f5f4ef; --bg3: #eeeee8;
+  --t1: #1a1a18; --t2: #5f5e5a; --t3: #888780;
+  --ts: #085041; --tw: #633806;
+  --b3: rgba(0,0,0,0.12); --b2: rgba(0,0,0,0.22);
+  --rm: 8px; --rl: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg1: #1e1e1c; --bg2: #2a2a27; --bg3: #333330;
+    --t1: #e8e6de; --t2: #b4b2a9; --t3: #888780;
+    --ts: #9fe1cb; --tw: #fac775;
+    --b3: rgba(255,255,255,0.1); --b2: rgba(255,255,255,0.2);
+  }
+}
+body { font-family: var(--font); background: var(--bg3); min-height: 100vh; padding: 24px; }
+.app { max-width: 900px; margin: 0 auto; background: var(--bg3); border-radius: var(--rl); overflow: hidden; border: 0.5px solid var(--b3); }
+.nav { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg1); border-bottom: 0.5px solid var(--b3); flex-wrap: wrap; gap: 8px; }
+.nav-brand { font-size: 15px; font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.brand-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; }
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab { font-size: 12px; padding: 6px 14px; border-radius: var(--rm); border: 0.5px solid transparent; cursor: pointer; color: var(--t2); background: transparent; font-family: var(--font); transition: all 0.15s; }
+.nav-tab.active { background: var(--bg2); color: var(--t1); border-color: var(--b3); font-weight: 500; }
+.nav-tab:hover:not(.active) { background: var(--bg2); }
+.disclaimer { background: var(--bg2); border-bottom: 0.5px solid var(--b3); padding: 7px 20px; font-size: 11px; color: var(--t3); line-height: 1.5; }
+.screen { display: none; padding: 20px; background: var(--bg3); }
+.screen.active { display: block; }
 
+/* KPIs */
+.kpi-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
+.kpi { background: var(--bg2); border-radius: var(--rm); padding: 14px 16px; }
+.kpi-val { font-size: 22px; font-weight: 500; color: var(--t1); margin: 0 0 2px; }
+.kpi-label { font-size: 11px; font-weight: 500; color: var(--t2); margin: 0; }
+.kpi-sub { font-size: 11px; color: var(--ts); margin-top: 4px; }
+
+/* Dashboard EUR input */
+.eur-input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; background: var(--bg1); border: 0.5px solid var(--b3); border-radius: var(--rm); padding: 10px 14px; }
+.eur-input-label { font-size: 12px; color: var(--t2); flex-shrink: 0; }
+.eur-input { border: none; background: transparent; font-size: 14px; font-weight: 500; color: var(--t1); font-family: var(--font); width: 120px; outline: none; }
+.eur-input-currency { font-size: 12px; color: var(--t3); flex-shrink: 0; }
+.eur-input-result { margin-left: auto; text-align: right; }
+.eur-result-val { font-size: 14px; font-weight: 500; color: #1D9E75; margin: 0; }
+.eur-result-label { font-size: 11px; color: var(--t3); margin: 0; }
+
+/* Cards */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.card { background: var(--bg1); border: 0.5px solid var(--b3); border-radius: var(--rl); padding: 16px 18px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--t1); margin: 0 0 12px; }
+.card-sub { font-size: 11px; color: var(--t3); margin: 0 0 12px; }
+
+/* Transactions */
+.tx-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid var(--b3); }
+.tx-row:last-child { border-bottom: none; }
+.tx-left { display: flex; align-items: center; gap: 10px; }
+.tx-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+.av-t { background: #E1F5EE; color: #085041; }
+.av-b { background: #E6F1FB; color: #0C447C; }
+.av-g { background: #EAF3DE; color: #27500A; }
+.tx-name { font-size: 13px; color: var(--t1); margin: 0; }
+.tx-meta { font-size: 11px; color: var(--t3); margin: 0; }
+.tx-right { text-align: right; }
+.tx-status { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+.st-pend { background: #FAEEDA; color: #633806; }
+.st-done { background: #E1F5EE; color: #085041; }
+
+/* AI Banner */
+.ai-banner { background: #E1F5EE; border: 0.5px solid #9FE1CB; border-radius: var(--rm); padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+.ai-text { font-size: 12px; color: #085041; line-height: 1.5; }
+
+/* FX screen */
+.fx-hero { background: var(--bg1); border: 0.5px solid var(--b3); border-radius: var(--rl); padding: 20px; margin-bottom: 14px; }
+.fx-rate-display { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+.fx-rate-big { font-size: 36px; font-weight: 500; color: var(--t1); }
+.fx-pair { font-size: 14px; color: var(--t2); }
+.fx-trend { font-size: 12px; color: #085041; background: #E1F5EE; padding: 3px 10px; border-radius: 20px; }
+.fx-chart-area { height: 80px; position: relative; margin-bottom: 14px; }
+.fx-canvas { width: 100%; height: 80px; }
+.fx-rec { background: #E1F5EE; border-radius: var(--rm); padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.rec-icon { width: 28px; height: 28px; border-radius: 50%; background: #1D9E75; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rec-title { font-size: 13px; font-weight: 500; color: #085041; margin: 0 0 2px; }
+.rec-body { font-size: 12px; color: #0F6E56; margin: 0; line-height: 1.5; }
+.fx-windows { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 14px; }
+.fx-window { border-radius: var(--rm); padding: 12px; border: 0.5px solid var(--b3); }
+.fx-window.best { border-color: #5DCAA5; background: #E1F5EE; }
+.fx-window.ok { background: var(--bg2); }
+.fw-label { font-size: 11px; color: var(--t3); margin: 0 0 3px; }
+.fw-label.best-lbl { color: #0F6E56; }
+.fw-rate { font-size: 16px; font-weight: 500; color: var(--t1); margin: 0 0 2px; }
+.fw-rate.best-rate { color: #085041; }
+.fw-time { font-size: 11px; color: var(--t2); margin: 0; }
+.fw-badge { display: inline-block; font-size: 10px; font-weight: 500; background: #1D9E75; color: #fff; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+
+/* Send/Receive */
+.flow-toggle { display: flex; gap: 6px; margin-bottom: 16px; }
+.flow-btn { flex: 1; padding: 9px 12px; font-size: 12px; font-weight: 500; border: 0.5px solid var(--b2); border-radius: var(--rm); cursor: pointer; background: transparent; color: var(--t2); font-family: var(--font); transition: all 0.15s; }
+.flow-btn.active { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+.flow-panel { display: none; }
+.flow-panel.active { display: block; }
+.send-form { background: var(--bg1); border: 0.5px solid var(--b3); border-radius: var(--rl); padding: 20px; }
+.form-row { margin-bottom: 14px; }
+.form-label { font-size: 12px; color: var(--t2); margin: 0 0 5px; display: block; }
+.form-input { width: 100%; padding: 9px 12px; background: var(--bg2); border: 0.5px solid var(--b3); border-radius: var(--rm); font-size: 14px; color: var(--t1); font-family: var(--font); }
+.form-select { width: 100%; padding: 9px 12px; background: var(--bg2); border: 0.5px solid var(--b3); border-radius: var(--rm); font-size: 14px; color: var(--t1); font-family: var(--font); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23888780' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.amount-row { display: flex; gap: 8px; }
+.currency-badge { padding: 9px 14px; background: var(--bg2); border: 0.5px solid var(--b3); border-radius: var(--rm); font-size: 13px; font-weight: 500; color: var(--t2); white-space: nowrap; }
+.summary-card { background: var(--bg2); border-radius: var(--rm); padding: 12px 14px; margin: 14px 0; }
+.s-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 0.5px solid var(--b3); }
+.s-row:last-child { border-bottom: none; }
+.s-key { font-size: 12px; color: var(--t2); }
+.s-val { font-size: 12px; font-weight: 500; color: var(--t1); }
+.s-val.g { color: #1D9E75; }
+.send-btn { width: 100%; padding: 12px; background: #1D9E75; border: none; border-radius: var(--rm); font-size: 14px; font-weight: 500; color: #fff; cursor: pointer; font-family: var(--font); }
+.send-btn:hover { background: #0F6E56; }
+.send-success { display: none; background: var(--bg2); border-radius: var(--rl); padding: 24px; text-align: center; margin-top: 12px; }
+.send-success.show { display: block; }
+.check-list { list-style: none; padding: 0; margin: 0; }
+.check-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--b3); }
+.check-item:last-child { border-bottom: none; }
+.ci { width: 18px; height: 18px; border-radius: 50%; background: #E1F5EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.check-name { font-size: 13px; color: var(--t1); margin: 0 0 1px; }
+.check-desc { font-size: 11px; color: var(--t2); margin: 0; line-height: 1.4; }
+
+/* Corridor badge */
+.corridor-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #E6F1FB; color: #0C447C; margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .fx-windows { grid-template-columns: 1fr; }
+  .nav-tabs { gap: 2px; }
+  .nav-tab { padding: 5px 8px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="nav">
+    <div class="nav-brand"><span class="brand-dot"></span>CorridorFX</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showScreen('dashboard')">Dashboard</button>
+      <button class="nav-tab" onclick="showScreen('fx')">FX Intelligence</button>
+      <button class="nav-tab" onclick="showScreen('send')">Send / Receive</button>
+    </div>
+  </div>
+  <div class="disclaimer">Concept prototype · All data shown is illustrative, based on publicly available market benchmarks. This is a product discovery case study — not a live product or real company data.</div>
+
+  <!-- DASHBOARD -->
+  <div id="screen-dashboard" class="screen active">
+    <div class="ai-banner">
+      <span class="ai-dot"></span>
+      <span class="ai-text">AI insight: EUR/GBP is at a 6-day high. CorridorFX recommends converting your pending EUR balance before 14:00 GMT to maximise GBP yield.</span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <p class="kpi-val" id="dash-saving">£ —</p>
+        <p class="kpi-label">FX savings this month</p>
+        <p class="kpi-sub">vs estimated standard bank rate</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-val">&lt; 30s</p>
+        <p class="kpi-label">Settled instantly</p>
+        <p class="kpi-sub">Both directions · UK–EU</p>
+      </div>
+      <div class="kpi">
+        <p class="kpi-val">100%</p>
+        <p class="kpi-label">Fee transparency</p>
+        <p class="kpi-sub">Full cost shown before sending</p>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <p class="card-title">Recent transactions</p>
+        <div class="tx-row">
+          <div class="tx-left"><div class="tx-avatar av-g">EN</div><div><p class="tx-name">Enterprise Name C</p><p class="tx-meta">GBP → EUR · UK paying EU</p><p class="tx-meta" id="tx-date-c">Scheduled · —</p></div></div>
+          <div class="tx-right"><p class="tx-amount" style="color:var(--t2);">£ —</p><span class="tx-status st-pend">Pending</span></div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-left"><div class="tx-avatar av-t">EN</div><div><p class="tx-name">Enterprise Name A</p><p class="tx-meta">GBP → EUR · UK paying EU</p><p class="tx-meta" id="tx-date-a">—</p></div></div>
+          <div class="tx-right"><p class="tx-amount" style="color:#791F1F;">− £ —</p><span class="tx-status" style="background:#FCEBEB;color:#791F1F;">Debited</span></div>
+        </div>
+        <div class="tx-row">
+          <div class="tx-left"><div class="tx-avatar av-b">EN</div><div><p class="tx-name">Enterprise Name B</p><p class="tx-meta">EUR → GBP · EU paying UK</p><p class="tx-meta" id="tx-date-b">—</p></div></div>
+          <div class="tx-right"><p class="tx-amount" style="color:#085041;">+ £ —</p><span class="tx-status st-done">Credited</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="card-title">AI payment routing</p>
+        <p class="card-sub">This month · illustrative breakdown</p>
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--t2)">Instant rail</span><span style="font-size:12px;font-weight:500;color:var(--t1)">62%</span></div>
+          <div style="height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;"><div style="width:62%;height:100%;background:#1D9E75;border-radius:4px;"></div></div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--t2)">Domestic fast rail</span><span style="font-size:12px;font-weight:500;color:var(--t1)">28%</span></div>
+          <div style="height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;"><div style="width:28%;height:100%;background:#5DCAA5;border-radius:4px;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:12px;color:var(--t2)">Standard wire</span><span style="font-size:12px;font-weight:500;color:var(--t1)">10%</span></div>
+          <div style="height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;"><div style="width:10%;height:100%;background:#B4B2A9;border-radius:4px;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FX INTELLIGENCE -->
+  <div id="screen-fx" class="screen">
+    <div class="fx-hero">
+      <!-- Currency selector + balance input row -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;">
+          <p style="font-size:11px;color:var(--t3);margin:0 0 5px;text-transform:uppercase;letter-spacing:0.07em;">Currency to convert to GBP</p>
+          <select class="form-select" id="fx-currency" onchange="updateFxScreen()" style="font-size:13px;padding:8px 32px 8px 10px;">
+            <option value="EUR">🇪🇺 EUR — Euro (EU countries)</option>
+            <option value="USD">🇺🇸 USD — US Dollar</option>
+            <option value="CHF">🇨🇭 CHF — Swiss Franc</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <p style="font-size:11px;color:var(--t3);margin:0 0 5px;text-transform:uppercase;letter-spacing:0.07em;">My pending balance</p>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input class="form-input" type="number" id="fx-balance-input" value="20000" oninput="updateFxScreen()" min="0" style="flex:1;padding:8px 10px;font-size:13px;">
+            <span style="font-size:13px;font-weight:500;color:var(--t3);min-width:32px;" id="fx-balance-currency-label">EUR</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <p style="font-size:11px;color:var(--t3);margin:0 0 3px;">You receive at AI-timed rate</p>
+          <p style="font-size:20px;font-weight:500;color:#1D9E75;margin:0;" id="fx-gbp-preview">≈ £17,062</p>
+        </div>
+      </div>
+
+      <!-- Rate display -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <p style="font-size:11px;color:var(--t3);margin:0 0 4px;text-transform:uppercase;letter-spacing:0.07em;">Live rate</p>
+          <div class="fx-rate-display">
+            <span class="fx-rate-big" id="fx-rate-big">1.1724</span>
+            <span class="fx-pair" id="fx-pair-label">EUR / GBP</span>
+            <span class="fx-trend" id="fx-trend-badge">+0.42% today</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fx-chart-area"><canvas class="fx-canvas" id="fx-chart"></canvas></div>
+
+      <div class="fx-rec">
+        <div class="rec-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v6M7 9.5v1" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div style="flex:1;">
+          <p class="rec-title" id="fx-rec-title">AI recommendation: convert now</p>
+          <p class="rec-body" id="fx-rec-body">Rate is at a 6-day high. Converting your pending EUR balance now maximises GBP yield relative to the 30-day average. Probability of further improvement in the next 4h is low — AI suggests acting within this window.</p>
+        </div>
+        <button onclick="convertNow()" style="flex-shrink:0;margin-left:12px;padding:8px 16px;background:#1D9E75;border:none;border-radius:var(--rm);font-size:12px;font-weight:500;color:#fff;cursor:pointer;font-family:var(--font);white-space:nowrap;">Convert now →</button>
+      </div>
+    </div>
+
+    <p style="font-size:12px;font-weight:500;color:var(--t2);margin:0 0 8px;text-transform:uppercase;letter-spacing:0.07em;">Optimal conversion windows — next 72h</p>
+    <div class="fx-windows" id="fx-windows-container">
+      <div class="fx-window best"><p class="fw-label best-lbl">Now · best window</p><p class="fw-rate best-rate" id="fw-rate-0">1.1724</p><p class="fw-time" id="fw-time-0">Today 13:42 GMT</p><span class="fw-badge">AI pick</span></div>
+      <div class="fx-window ok"><p class="fw-label">Tomorrow morning</p><p class="fw-rate" id="fw-rate-1">1.1698</p><p class="fw-time" id="fw-time-1">—</p></div>
+      <div class="fx-window ok"><p class="fw-label">Day after tomorrow</p><p class="fw-rate" id="fw-rate-2">1.1681</p><p class="fw-time" id="fw-time-2">—</p></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <p class="card-title">Your FX exposure</p>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);" id="fx-exp-label-1">EUR pending conversion</span><span style="font-size:13px;font-weight:500;color:var(--t1);">€ —</span></div>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);">Other currencies pending</span><span style="font-size:13px;font-weight:500;color:var(--t1);">—</span></div>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);">Total GBP equivalent</span><span style="font-size:13px;font-weight:500;color:var(--t1);">£ —</span></div>
+      </div>
+      <div class="card">
+        <p class="card-title">Monthly FX efficiency</p>
+        <p class="card-sub">vs estimated standard bank rate · this month</p>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);">AI timing gains</span><span style="font-size:13px;font-weight:500;color:#1D9E75;">£ —</span></div>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);">Transparent FX savings</span><span style="font-size:13px;font-weight:500;color:#1D9E75;">£ —</span></div>
+        <div class="tx-row"><span style="font-size:13px;color:var(--t2);">Reduced transfer fees</span><span style="font-size:13px;font-weight:500;color:#1D9E75;">£ —</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEND / RECEIVE -->
+  <div id="screen-send" class="screen">
+    <div class="flow-toggle">
+      <button class="flow-btn active" onclick="switchFlow('out', this)">UK paying EU &rarr;</button>
+      <button class="flow-btn" onclick="switchFlow('in', this)">&larr; EU paying UK</button>
+    </div>
+    <div class="two-col">
+      <div>
+        <!-- OUTBOUND -->
+        <div id="flow-out" class="flow-panel active">
+          <div class="send-form" id="form-out">
+            <p style="font-size:11px;color:var(--t3);margin:0 0 14px;text-transform:uppercase;letter-spacing:0.07em;">UK SME sending to EU</p>
+            <div class="form-row"><label class="form-label">From (your account)</label><input class="form-input" type="text" value="My UK Business Account · GBP" readonly></div>
+            <div class="form-row">
+              <label class="form-label">Recipient country</label>
+              <select class="form-select" id="out-country" onchange="calcOut()">
+                <option value="DE">🇩🇪 Germany</option>
+                <option value="FR">🇫🇷 France</option>
+                <option value="NL">🇳🇱 Netherlands</option>
+                <option value="IT">🇮🇹 Italy</option>
+                <option value="ES">🇪🇸 Spain</option>
+                <option value="CH">🇨🇭 Switzerland</option>
+                <option value="US">🇺🇸 United States</option>
+              </select>
+            </div>
+            <div class="form-row"><label class="form-label">Recipient</label><input class="form-input" type="text" value="Enterprise Name · EU" readonly></div>
+            <div class="form-row">
+              <label class="form-label">You send</label>
+              <div class="amount-row"><input class="form-input" type="number" id="out-send" value="10000" oninput="calcOut()" style="flex:1;" min="1"><span class="currency-badge">GBP</span></div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Recipient receives</label>
+              <div class="amount-row"><input class="form-input" type="text" id="out-recv" value="€11.692" readonly style="flex:1;color:#1D9E75;"><span class="currency-badge" id="out-recv-currency">EUR</span></div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Payment date</label>
+              <input class="form-input" type="date" id="out-date" style="color:var(--t1);">
+            </div>
+            <div class="summary-card">
+              <div class="s-row"><span class="s-key">Corridor</span><span class="s-val" id="out-corridor-label">UK → Germany</span></div>
+              <div class="s-row"><span class="s-key">FX rate</span><span class="s-val" id="out-rate-display">1.1724 GBP/EUR · mid-market</span></div>
+              <div class="s-row"><span class="s-key">CorridorFX fee</span><span class="s-val">~0.35% · shown upfront</span></div>
+              <div class="s-row"><span class="s-key">Hidden charges</span><span class="s-val g">None</span></div>
+              <div class="s-row"><span class="s-key">Settlement</span><span class="s-val g" id="out-settlement">Seconds · instant rail</span></div>
+              <div class="s-row"><span class="s-key">Recipient gets exactly</span><span class="s-val g">Amount shown above</span></div>
+            </div>
+            <button class="send-btn" onclick="confirmSend('out')">Confirm and send</button>
+          </div>
+          <div class="send-success" id="success-out">
+            <div style="width:40px;height:40px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9l4.5 4.5L15 5" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <p style="font-size:15px;font-weight:500;color:var(--t1);margin:0 0 4px;">Payment sent</p>
+            <p style="font-size:12px;color:var(--t2);margin:0;" id="success-out-msg">GBP transferred to Enterprise Name · EU. Recipient notified instantly.</p>
+          </div>
+        </div>
+
+        <!-- INBOUND -->
+        <div id="flow-in" class="flow-panel">
+          <!-- Progress indicator — shown when coming from Convert now -->
+          <div id="conversion-progress" style="display:none;background:var(--bg1);border:0.5px solid #9FE1CB;border-radius:var(--rm);padding:12px 14px;margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <p style="font-size:12px;font-weight:500;color:#085041;margin:0;">Pending balance conversion</p>
+              <p style="font-size:12px;color:var(--t3);margin:0;" id="progress-currency-label">EUR · from FX Intelligence</p>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-bottom:6px;">
+              <span>Total pending: <strong id="progress-total" style="color:var(--t1);">€20.000</strong></span>
+              <span>Converted: <strong id="progress-done" style="color:#1D9E75;">€0</strong></span>
+            </div>
+            <div style="height:6px;background:var(--bg2);border-radius:4px;overflow:hidden;">
+              <div id="progress-bar" style="width:0%;height:100%;background:#1D9E75;border-radius:4px;transition:width 0.4s ease;"></div>
+            </div>
+            <p style="font-size:11px;color:var(--t3);margin-top:6px;">Convert per transaction below — each payment is processed individually by corridor.</p>
+          </div>
+
+          <div class="send-form" id="form-in">
+            <p style="font-size:11px;color:var(--t3);margin:0 0 14px;text-transform:uppercase;letter-spacing:0.07em;">EU client sending to UK SME</p>
+            <div class="form-row">
+              <label class="form-label">Sender country</label>
+              <select class="form-select" id="in-country" onchange="calcIn()">
+                <option value="DE">🇩🇪 Germany</option>
+                <option value="FR">🇫🇷 France</option>
+                <option value="NL">🇳🇱 Netherlands</option>
+                <option value="IT">🇮🇹 Italy</option>
+                <option value="ES">🇪🇸 Spain</option>
+                <option value="CH">🇨🇭 Switzerland</option>
+                <option value="US">🇺🇸 United States</option>
+              </select>
+            </div>
+            <div class="form-row"><label class="form-label">To (your account)</label><input class="form-input" type="text" value="My UK Business Account · GBP" readonly></div>
+            <div class="form-row">
+              <label class="form-label">Amount received</label>
+              <div class="amount-row"><input class="form-input" type="number" id="in-eur" value="10000" oninput="calcIn()" style="flex:1;" min="1"><span class="currency-badge" id="in-currency-badge">EUR</span></div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">You receive (GBP)</label>
+              <div class="amount-row"><input class="form-input" type="text" id="in-gbp" value="£8,501" readonly style="flex:1;color:#1D9E75;"><span class="currency-badge">GBP</span></div>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Conversion date</label>
+              <input class="form-input" type="date" id="in-date" style="color:var(--t1);">
+            </div>
+            <div class="summary-card">
+              <div class="s-row"><span class="s-key">Corridor</span><span class="s-val" id="in-corridor-label">Germany → UK</span></div>
+              <div class="s-row"><span class="s-key">FX rate</span><span class="s-val" id="in-rate-display">0.8531 EUR/GBP · mid-market</span></div>
+              <div class="s-row"><span class="s-key">Conversion timing</span><span class="s-val g">AI-optimised</span></div>
+              <div class="s-row"><span class="s-key">Hidden charges</span><span class="s-val g">None</span></div>
+              <div class="s-row"><span class="s-key">Funds available</span><span class="s-val g">Instantly after conversion</span></div>
+              <div class="s-row"><span class="s-key">You receive exactly</span><span class="s-val g">Amount shown above</span></div>
+            </div>
+            <button class="send-btn" onclick="confirmConversion()">Confirm conversion</button>
+          </div>
+          <div class="send-success" id="success-in">
+            <div style="width:40px;height:40px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9l4.5 4.5L15 5" stroke="#1D9E75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <p style="font-size:15px;font-weight:500;color:var(--t1);margin:0 0 4px;">Conversion confirmed</p>
+            <p style="font-size:12px;color:var(--t2);margin:0 0 10px;" id="success-in-msg">EUR converted to GBP at AI-timed rate. Funds available in your account.</p>
+            <button onclick="nextConversion()" id="next-conversion-btn" style="display:none;padding:8px 18px;background:transparent;border:0.5px solid #1D9E75;border-radius:var(--rm);font-size:12px;font-weight:500;color:#1D9E75;cursor:pointer;font-family:var(--font);">Convert next payment →</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:14px;">
+          <p class="card-title">What CorridorFX does for you</p>
+          <ul class="check-list">
+            <li class="check-item"><div class="ci"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><p class="check-name">Mid-market FX rate</p><p class="check-desc">Real market rate — no hidden markup on any conversion</p></div></li>
+            <li class="check-item"><div class="ci"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><p class="check-name">AI smart routing</p><p class="check-desc">Fastest, lowest-cost path selected automatically per corridor</p></div></li>
+            <li class="check-item"><div class="ci"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><p class="check-name">Full fee transparency</p><p class="check-desc">Exact amount confirmed before sending — no surprises</p></div></li>
+            <li class="check-item"><div class="ci"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><p class="check-name">Settlement in seconds</p><p class="check-desc">Both UK → EU and EU → UK settled instantly</p></div></li>
+          </ul>
+        </div>
+        <div class="card">
+          <p class="card-title">Supported flows</p>
+          <div class="tx-row"><span style="font-size:13px;color:var(--t2);">UK pays EU supplier</span><span class="tx-status st-done">GBP → EUR</span></div>
+          <div class="tx-row"><span style="font-size:13px;color:var(--t2);">EU client pays UK</span><span class="tx-status st-done">EUR → GBP</span></div>
+          <div class="tx-row"><span style="font-size:13px;color:var(--t2);">UK pays US partner</span><span class="tx-status st-done">GBP → USD</span></div>
+          <div class="tx-row"><span style="font-size:13px;color:var(--t2);">UK pays CH partner</span><span class="tx-status st-done">GBP → CHF</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const FEE = 0.9965;
+
+const RATES = {
+  EUR: { toGBP: 0.8531, fromGBP: 1.1724, symbol: '€', name: 'EUR', locale: 'de-DE', settlement: 'Seconds · instant rail',
+    chartData: [1.1681,1.1695,1.1702,1.1709,1.1718,1.1724,1.1720,1.1711,1.1700],
+    windows: ['1.1724','1.1698','1.1681'], trend: '+0.42% today',
+    rec: 'Rate is at a 6-day high. Converting your pending EUR balance now maximises GBP yield relative to the 30-day average. Probability of further improvement in the next 4h is low — AI suggests acting within this window.' },
+  USD: { toGBP: 0.7540, fromGBP: 1.3261, symbol: '$', name: 'USD', locale: 'en-US', settlement: 'Seconds · fast rail',
+    chartData: [1.3190,1.3210,1.3225,1.3240,1.3255,1.3261,1.3250,1.3238,1.3220],
+    windows: ['1.3261','1.3240','1.3218'], trend: '+0.18% today',
+    rec: 'GBP/USD is near a weekly high. Converting your pending USD balance now delivers strong GBP yield. The AI sees limited upside in the next 24h — acting now is the optimal timing.' },
+  CHF: { toGBP: 0.9472, fromGBP: 1.0558, symbol: 'CHF ', name: 'CHF', locale: 'de-CH', settlement: '< 2 min · standard rail',
+    chartData: [1.0510,1.0525,1.0538,1.0545,1.0552,1.0558,1.0549,1.0540,1.0530],
+    windows: ['1.0558','1.0540','1.0525'], trend: '+0.09% today',
+    rec: 'GBP/CHF is at its best level this week. The Swiss franc has been range-bound — the AI recommends converting your CHF balance now while the rate favours GBP.' }
+};
+
+const COUNTRIES = {
+  DE: { name: 'Germany', currency: 'EUR', flag: '🇩🇪' },
+  FR: { name: 'France', currency: 'EUR', flag: '🇫🇷' },
+  NL: { name: 'Netherlands', currency: 'EUR', flag: '🇳🇱' },
+  IT: { name: 'Italy', currency: 'EUR', flag: '🇮🇹' },
+  ES: { name: 'Spain', currency: 'EUR', flag: '🇪🇸' },
+  CH: { name: 'Switzerland', currency: 'CHF', flag: '🇨🇭' },
+  US: { name: 'United States', currency: 'USD', flag: '🇺🇸' }
+};
+
+// --- Conversion progress state ---
+let progressState = { active: false, total: 0, converted: 0, currency: 'EUR' };
+
+function convertNow() {
+  const cur = document.getElementById('fx-currency').value;
+  const amount = parseFloat(document.getElementById('fx-balance-input').value) || 0;
+  progressState = { active: true, total: amount, converted: 0, currency: cur };
+  showScreen('send');
+  document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.flow-btn')[1].classList.add('active');
+  document.getElementById('flow-in').classList.add('active');
+  document.getElementById('success-in').classList.remove('show');
+  const f = document.getElementById('form-in');
+  f.style.opacity = ''; f.style.pointerEvents = '';
+  const firstAmount = Math.round(amount / 2);
+  document.getElementById('in-eur').value = firstAmount;
+  if (cur === 'CHF') document.getElementById('in-country').value = 'CH';
+  else if (cur === 'USD') document.getElementById('in-country').value = 'US';
+  else document.getElementById('in-country').value = 'DE';
+  calcIn();
+  showProgress();
+}
+
+function showProgress() {
+  if (!progressState.active) return;
+  const el = document.getElementById('conversion-progress');
+  el.style.display = 'block';
+  const r = RATES[progressState.currency];
+  document.getElementById('progress-currency-label').textContent = progressState.currency + ' · from FX Intelligence';
+  document.getElementById('progress-total').textContent = r.symbol + progressState.total.toLocaleString(r.locale);
+  document.getElementById('progress-done').textContent = r.symbol + progressState.converted.toLocaleString(r.locale);
+  const pct = progressState.total > 0 ? Math.min((progressState.converted / progressState.total) * 100, 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function confirmConversion() {
+  const amount = parseFloat(document.getElementById('in-eur').value) || 0;
+  const form = document.getElementById('form-in');
+  form.style.opacity = '0.4'; form.style.pointerEvents = 'none';
+  document.getElementById('success-in').classList.add('show');
+  if (progressState.active) {
+    progressState.converted = Math.min(progressState.converted + amount, progressState.total);
+    showProgress();
+    const remaining = progressState.total - progressState.converted;
+    const r = RATES[progressState.currency];
+    const nextBtn = document.getElementById('next-conversion-btn');
+    if (remaining > 0) {
+      document.getElementById('success-in-msg').textContent =
+        r.symbol + amount.toLocaleString(r.locale) + ' converted to GBP at AI-timed rate. ' +
+        r.symbol + remaining.toLocaleString(r.locale) + ' still pending — convert next payment below.';
+      nextBtn.style.display = 'inline-block';
+      nextBtn.textContent = 'Convert next payment (' + r.symbol + remaining.toLocaleString(r.locale) + ' remaining) →';
+    } else {
+      document.getElementById('success-in-msg').textContent =
+        'All ' + r.symbol + progressState.total.toLocaleString(r.locale) + ' converted to GBP at AI-timed rate. Full balance available in your account.';
+      nextBtn.style.display = 'none';
+    }
+  } else {
+    document.getElementById('success-in-msg').textContent = 'EUR converted to GBP at AI-timed rate. Funds available in your account.';
+    document.getElementById('next-conversion-btn').style.display = 'none';
+  }
+}
+
+function nextConversion() {
+  const remaining = progressState.total - progressState.converted;
+  const form = document.getElementById('form-in');
+  form.style.opacity = ''; form.style.pointerEvents = '';
+  document.getElementById('success-in').classList.remove('show');
+  document.getElementById('in-eur').value = remaining;
+  if (progressState.currency === 'EUR') {
+    document.getElementById('in-country').value = 'IT';
+    calcIn();
+  }
+  showProgress();
+}
+
+function updateFxScreen() {
+  const cur = document.getElementById('fx-currency').value;
+  const amount = parseFloat(document.getElementById('fx-balance-input').value) || 0;
+  const r = RATES[cur];
+  const gbp = Math.round(amount * r.toGBP * FEE);
+
+  document.getElementById('fx-balance-currency-label').textContent = cur;
+  document.getElementById('fx-gbp-preview').textContent = '≈ £' + gbp.toLocaleString('en-GB');
+  document.getElementById('fx-rate-big').textContent = r.fromGBP.toFixed(4);
+  document.getElementById('fx-pair-label').textContent = cur + ' / GBP';
+  document.getElementById('fx-trend-badge').textContent = r.trend;
+  document.getElementById('fx-rec-body').textContent = r.rec;
+  document.getElementById('fw-rate-0').textContent = r.windows[0];
+  document.getElementById('fw-rate-1').textContent = r.windows[1];
+  document.getElementById('fw-rate-2').textContent = r.windows[2];
+  document.getElementById('fx-exp-label-1').textContent = cur + ' pending conversion';
+  drawFxChart();
+}
+
+function calcOut() {
+  const gbp = parseFloat(document.getElementById('out-send').value) || 0;
+  const country = document.getElementById('out-country').value;
+  const cInfo = COUNTRIES[country];
+  const rate = RATES[cInfo.currency];
+  const converted = Math.round(gbp * rate.fromGBP * FEE);
+  const formatted = rate.symbol + converted.toLocaleString(rate.locale);
+  document.getElementById('out-recv').value = formatted;
+  document.getElementById('out-recv-currency').textContent = rate.name;
+  document.getElementById('out-rate-display').textContent = rate.fromGBP.toFixed(4) + ' GBP/' + rate.name + ' · mid-market';
+  document.getElementById('out-corridor-label').textContent = 'UK → ' + cInfo.name;
+  document.getElementById('out-settlement').textContent = rate.settlement;
+}
+
+function calcIn() {
+  const amount = parseFloat(document.getElementById('in-eur').value) || 0;
+  const country = document.getElementById('in-country').value;
+  const cInfo = COUNTRIES[country];
+  const rate = RATES[cInfo.currency];
+  const gbp = Math.round(amount * rate.toGBP * FEE);
+  document.getElementById('in-gbp').value = '£' + gbp.toLocaleString('en-GB');
+  document.getElementById('in-currency-badge').textContent = rate.name;
+  document.getElementById('in-rate-display').textContent = rate.toGBP.toFixed(4) + ' ' + rate.name + '/GBP · mid-market';
+  document.getElementById('in-corridor-label').textContent = cInfo.name + ' → UK';
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const tabs = ['dashboard','fx','send'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(name)].classList.add('active');
+  if (name === 'fx') setTimeout(drawFxChart, 100);
+}
+
+function switchFlow(dir, btn) {
+  document.querySelectorAll('.flow-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.flow-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('flow-' + dir).classList.add('active');
+  ['out','in'].forEach(d => {
+    document.getElementById('success-' + d).classList.remove('show');
+    const f = document.getElementById('form-' + d);
+    if (f) { f.style.opacity = ''; f.style.pointerEvents = ''; }
+  });
+}
+
+function confirmSend(dir) {
+  const form = document.getElementById('form-' + dir);
+  form.style.opacity = '0.4';
+  form.style.pointerEvents = 'none';
+  document.getElementById('success-' + dir).classList.add('show');
+}
+
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('out-date').value = today;
+document.getElementById('in-date').value = today;
+
+// --- Dynamic dates ---
+function setDynamicDates() {
+  const now = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmt(d) {
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function fmtShort(d) {
+    return days[d.getDay()] + ' ' + d.getDate() + ' ' + months[d.getMonth()];
+  }
+
+  // Tomorrow = scheduled pending transaction
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+  document.getElementById('tx-date-c').textContent =
+    'Scheduled · ' + fmt(tomorrow) + ', 09:00 GMT';
+
+  // Yesterday = debited
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  document.getElementById('tx-date-a').textContent =
+    fmt(yesterday) + ', 13:44 GMT';
+
+  // Yesterday = credited (slightly earlier)
+  document.getElementById('tx-date-b').textContent =
+    fmt(yesterday) + ', 11:12 GMT';
+
+  // FX windows
+  document.getElementById('fw-time-0').textContent = 'Today 13:42 GMT';
+
+  const d1 = new Date(now); d1.setDate(now.getDate() + 1);
+  document.getElementById('fw-time-1').textContent =
+    fmtShort(d1) + ' 09:00–11:00 GMT';
+
+  const d2 = new Date(now); d2.setDate(now.getDate() + 2);
+  document.getElementById('fw-time-2').textContent =
+    fmtShort(d2) + ' 14:00–16:00 GMT';
+}
+setDynamicDates();
+
+let fxChartInst = null;
+function drawFxChart() {
+  const canvas = document.getElementById('fx-chart');
+  if (!canvas || !window.Chart) return;
+  if (fxChartInst) fxChartInst.destroy();
+  const cur = document.getElementById('fx-currency') ? document.getElementById('fx-currency').value : 'EUR';
+  const r = RATES[cur];
+  const labels = ['09:00','10:00','11:00','12:00','13:00','13:42','14:00','15:00','16:00'];
+  const data = r.chartData;
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const col = '#888780';
+  fxChartInst = new Chart(canvas, {
+    type: 'line',
+    data: { labels, datasets: [{ data, borderColor: '#1D9E75', borderWidth: 2,
+      pointBackgroundColor: data.map((v,i)=>i===5?'#1D9E75':'transparent'),
+      pointBorderColor: data.map((v,i)=>i===5?'#1D9E75':'transparent'),
+      pointRadius: data.map((v,i)=>i===5?5:0), tension: 0.4, fill: false }] },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => '  ' + cur + '/GBP ' + ctx.parsed.y.toFixed(4) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: col } },
+        y: { grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10 }, color: col, callback: v => v.toFixed(4) } }
+      }
+    }
+  });
+}
+drawFxChart();
+</script>
+</body>
+</html>
