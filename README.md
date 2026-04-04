@@ -2,7 +2,7 @@
 ### Product Discovery Case Study — Cross-Border Payments for UK SMEs
 
 > **This is a product thinking exercise, not a live product or startup pitch.**
-> All data shown is illustrative, based on publicly available market benchmarks (Bank of England, FCA, WorldFirst, Wise).
+> All data shown is illustrative, based on publicly available market benchmarks
 
 ---
 
@@ -20,7 +20,7 @@ UK SMEs trading with European partners face three compounding pain points in cro
 
 **1. Hidden FX markups (2–4%)** — Banks embed a spread above the mid-market rate. The customer sees a "no fee" transfer, but pays 2–4% more than the real market rate on every conversion. Neither side sees the full cost before confirmation.
 
-**2. Correspondent banking chain** — International transfers via SWIFT pass through one or more intermediary banks, each deducting fees from the value in transit. A payment of €10,000 may arrive as €9,988 — with no explanation.
+**2. Correspondent banking chain** — International transfers via SWIFT pass through one or more intermediary banks, each deducting fees from the value in transit. A payment of €10,000 may arrive as €9,988, with no explanation.
 
 **3. Slow settlement (1–3 business days)** — While domestic UK transfers settle in seconds via Faster Payments, international transfers remain slow, locking up working capital and straining supplier relationships.
 
@@ -38,7 +38,7 @@ Post-Brexit, the UK–EU corridor has become more complex, with additional frict
 
 | Problem | Solution |
 |---|---|
-| Hidden FX markup | Mid-market rate applied to every conversion — no spread |
+| Hidden FX markup | Mid-market rate applied to every conversion (no spread) |
 | No fee visibility | Full cost shown to both sides before any confirmation |
 | Slow settlement | AI smart routing selects the fastest available payment rail per corridor |
 
@@ -65,17 +65,17 @@ A navigable high-fidelity prototype with **3 connected screens**:
 ### FX Intelligence
 - Currency selector: EUR (EU countries), USD (United States), CHF (Switzerland)
 - Pending balance input with live GBP preview at AI-timed rate
-- Dynamic rate chart — updates per selected currency with real 30 Mar 2026 rates
+- Dynamic rate chart  
 - AI conversion recommendation with "Convert now →" button
 - 3 optimal conversion windows (next 72h) with AI pick indicator
 - FX exposure and monthly efficiency cards
 
 ### Send / Receive
 - Toggle between **UK paying EU →** and **← EU paying UK**
-- Country selector (7 corridors) — automatically adjusts currency, FX rate, settlement time
+- Country selector (7 corridors) (automatically adjusts currency, FX rate, settlement time) 
 - Live FX calculation with mid-market rate and fee breakdown
 - Date picker for scheduling future payments
-- Progress indicator when arriving from "Convert now" — tracks partial conversions across multiple corridors (e.g. €10k from Germany + €10k from Italy)
+- Progress indicator when arriving from "Convert now" (tracks partial conversions across multiple corridors (e.g. €10k from Germany + €10k from Italy))
 
 ---
 
